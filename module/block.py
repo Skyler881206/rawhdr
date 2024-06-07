@@ -42,26 +42,26 @@ class PatchEmbedding(nn.Module):
         return embeddings
 
 class mask_estimation(nn.Module):
-    def __init__(self, in_channels):
+    def __init__(self, in_channels = 4, out_channels = 32):
         super(mask_estimation, self).__init__()
-        self.barnch = nn.Conv2d(in_channels, 1, kernel_size=1, stride=1, padding=0)
+        self.barnch = nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=1, padding=0)
         
         self.conv = nn.Sequential(
             nn.Conv2d(in_channels, 32, kernel_size=3, stride=1, padding=1),
             nn.ReLU(inplace=True),
-            nn.Conv2d(32, 1, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(32, out_channels, kernel_size=3, stride=1, padding=1),
             nn.ReLU(inplace=True)
         )
         
-        self.act = nn.Sigmoid()
+        # self.act = nn.Sigmoid()
         
     def forward(self, x):
         x = self.barnch(x) + self.conv(x)
-        x = self.act(x)
+        # x = self.act(x)
         return x
 
 class global_spatial_guidance(nn.Module):
-    def __init__(self, in_channels, patch_size = 16, dim = 768):
+    def __init__(self, in_channels = 4, patch_size = 16, dim = 768):
         super(global_spatial_guidance, self).__init__()
         
         # self.input_projection = nn.Conv2d(in_channels, 32, kernel_size=1, stride=1, padding=0)
@@ -126,7 +126,7 @@ class global_spatial_guidance(nn.Module):
         x = x.view(x.size(0), -1, x.size(1)) # Upsampling and Reshape to the embedding shape
         x = self.LeWin_up_2(x)
         
-        return x.view(B, C, H, W)
+        return x.view(B, 3, H, W)
 
 
 def conv(in_channels, out_channels, kernel_size, bias=False, stride = 1):
@@ -1418,7 +1418,7 @@ if __name__ == "__main__":
 ##### LeWin Transformer #####
 
 if __name__ == "__main__":
-    model = global_spatial_guidance(3)
-    test_tensor = torch.randn(2, 3, 512, 512)
+    model = global_spatial_guidance(4).to("cuda")
+    test_tensor = torch.randn(2, 4, 512, 512).to("cuda")
     
     model(test_tensor)

@@ -7,24 +7,32 @@ class Unet_encoder(nn.Module):
         
         self.encoder_1 = nn.Sequential(
             nn.Conv2d(in_channels, encoder_channels, kernel_size=3, padding=1),
+            nn.BatchNorm2d(encoder_channels),
+            nn.ReLU(),
             # nn.Conv2d(encoder_channels, encoder_channels, kernel_size=3, padding=1),
             nn.Conv2d(encoder_channels, encoder_channels, kernel_size=3, padding=1)
             )
         
         self.encoder_2 = nn.Sequential(
             nn.Conv2d(encoder_channels, encoder_channels * 2, kernel_size=3, padding=1),
+            nn.BatchNorm2d(encoder_channels * 2),
+            nn.ReLU(),
             # nn.Conv2d(encoder_channels * 2, encoder_channels * 2, kernel_size=3, padding=1),
             nn.Conv2d(encoder_channels * 2, encoder_channels * 2, kernel_size=3, padding=1)
             )
         
         self.encoder_3 = nn.Sequential(
             nn.Conv2d(encoder_channels * 2, encoder_channels * 4, kernel_size=3, padding=1),
+            nn.BatchNorm2d(encoder_channels * 4),
+            nn.ReLU(),
             # nn.Conv2d(encoder_channels * 4, encoder_channels * 4, kernel_size=3, padding=1),
             nn.Conv2d(encoder_channels * 4, encoder_channels * 4, kernel_size=3, padding=1)
             )
         
         self.encoder_4 = nn.Sequential(
             nn.Conv2d(encoder_channels * 4, encoder_channels * 8, kernel_size=3, padding=1),
+            nn.BatchNorm2d(encoder_channels * 8),
+            nn.ReLU(),
             # nn.Conv2d(encoder_channels * 8, encoder_channels * 8, kernel_size=3, padding=1),
             nn.Conv2d(encoder_channels * 8, encoder_channels * 8, kernel_size=3, padding=1)
             )
@@ -46,24 +54,32 @@ class Unet_decoder(nn.Module):
         
         self.decoder_4 = nn.Sequential(
             nn.Conv2d(decoder_channels * 8, decoder_channels * 8, kernel_size=3, padding=1),
+            nn.BatchNorm2d(decoder_channels * 8),
+            nn.ReLU(),
             # nn.Conv2d(decoder_channels * 8, decoder_channels * 8, kernel_size=3, padding=1),
             nn.Conv2d(decoder_channels * 8, decoder_channels * 8, kernel_size=3, padding=1)
             )
         
         self.decoder_3 = nn.Sequential(
             nn.Conv2d(int(decoder_channels * 4 / 2) + decoder_channels * 4, decoder_channels * 4, kernel_size=3, padding=1),
+            nn.BatchNorm2d(decoder_channels * 4),
+            nn.ReLU(),
             # nn.Conv2d(decoder_channels * 4, decoder_channels * 4, kernel_size=3, padding=1),
             nn.Conv2d(decoder_channels * 4, decoder_channels * 4, kernel_size=3, padding=1)
             )
         
         self.decoder_2 = nn.Sequential(
             nn.Conv2d(int(decoder_channels * 2 / 2) + decoder_channels * 2, decoder_channels * 2, kernel_size=3, padding=1),
+            nn.BatchNorm2d(decoder_channels * 2),
+            nn.ReLU(),
             # nn.Conv2d(decoder_channels * 2, decoder_channels * 2, kernel_size=3, padding=1),
             nn.Conv2d(decoder_channels * 2, decoder_channels * 2 , kernel_size=3, padding=1)
             )
         
         self.decoder_1 = nn.Sequential(
             nn.Conv2d(int(decoder_channels / 2) + decoder_channels, decoder_channels, kernel_size=3, padding=1),
+            nn.BatchNorm2d(decoder_channels),
+            nn.ReLU(),
             # nn.Conv2d(decoder_channels, decoder_channels, kernel_size=3, padding=1),
             nn.Conv2d(decoder_channels, out_channels, kernel_size=3, padding=1)
             )

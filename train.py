@@ -322,8 +322,8 @@ if __name__ == "__main__":
                                 
                         writer.add_image("Validation_Source/Source_LDR", dataset.eval_image(source), val_iteration)
                         
-                        writer.add_image("Validation_Out_texture/Target", dataset.eval_image(target, file_name=result_root + "/train/" + str(train_iteration) + "_gt.hdr"), val_iteration)
-                        writer.add_image("Validation_Out_texture/Predict_output", dataset.eval_image(pd_output, file_name=result_root + "/train/" + str(train_iteration) + "_pd.hdr"), val_iteration)
+                        writer.add_image("Validation_Out_texture/Target", dataset.eval_image(target, file_name=result_root + "/val/" + str(val_iteration) + "_gt.hdr"), val_iteration)
+                        writer.add_image("Validation_Out_texture/Predict_output", dataset.eval_image(pd_output, file_name=result_root + "/val/" + str(val_iteration) + "_pd.hdr"), val_iteration)
                         # writer.add_imageValidationin_Out_texture/Predict_texture", dataset.eval_image(pd_texture), train_iteration)
                         
                         writer.add_image("Validation_Out_texture_log/Target_log", dataset.eval_image(target, log=True, max_value=max_value), val_iteration)

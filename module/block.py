@@ -53,20 +53,19 @@ class mask_estimation(nn.Module):
             nn.ReLU(inplace=True)
         )
         
-        # self.act = nn.Sigmoid()
+        self.act = nn.Sigmoid()
         
     def forward(self, x):
         x = self.barnch(x) + self.conv(x)
-        # x = self.act(x)
+        x = self.act(x)
         return x
 
 class global_spatial_guidance(nn.Module):
     def __init__(self, in_channels = 4, patch_size = 16, dim = 768):
         super(global_spatial_guidance, self).__init__()
+        self.patch_size = patch_size
         
-        # self.input_projection = nn.Conv2d(in_channels, 32, kernel_size=1, stride=1, padding=0)
         self.input_projection = PatchEmbedding(in_channels, patch_size, dim)
-        # self.LeWin_down_1 = LeWinTransformerBlock(dim=768, input_resolution=(512, 512), num_heads=12)
         self.LeWin_down_1 = nn.Sequential(
             LeWinTransformerBlock(dim=dim, input_resolution=(512, 512), num_heads=12),
             LeWinTransformerBlock(dim=dim, input_resolution=(512, 512), num_heads=12),
@@ -76,7 +75,6 @@ class global_spatial_guidance(nn.Module):
         self.LeWin_down_2 = nn.Sequential(
             LeWinTransformerBlock(dim=dim, input_resolution=(256, 256), num_heads=12),
             LeWinTransformerBlock(dim=dim, input_resolution=(256, 256), num_heads=12),
-            # nn.Conv2d(32, 32, 3, 2, 1)
         )
         
         self.down2 = Downsampling(dim, dim)
@@ -102,8 +100,9 @@ class global_spatial_guidance(nn.Module):
         
     def forward(self, x):
         B, C, H, W = x.shape
-        x = self.input_projection(x)
+        P = self.patch_size
         
+        x = self.input_projection(x)
         x = self.LeWin_down_1(x)
         x = x.view(x.size(0), x.size(2), int(x.size(1) ** 0.5), int(x.size(1) ** 0.5))
         x = self.down1(x)
@@ -126,7 +125,9 @@ class global_spatial_guidance(nn.Module):
         x = x.view(x.size(0), -1, x.size(1)) # Upsampling and Reshape to the embedding shape
         x = self.LeWin_up_2(x)
         
-        return x.view(B, 3, H, W)
+        x = x.view(B, H // P, W // P, -1)
+        x = self.output_projection(x)
+        return x.view(B, 4, H, W)
 
 
 def conv(in_channels, out_channels, kernel_size, bias=False, stride = 1):

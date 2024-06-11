@@ -23,12 +23,12 @@ class rawhdr_model(nn.Module):
             nn.Sigmoid()
             )
         
-        self.dual_intensity_guidance = dual_intensity_guidance(in_channels=4, out_channels=3)
+        self.dual_intensity_guidance = dual_intensity_guidance(in_channels=4, out_channels=4)
 
         self.global_spatial_guidance = global_spatial_guidance()
         
         self.Reconstruct = nn.Sequential(
-            Reconstruct(3, 32),
+            Reconstruct(4, 32),
             Reconstruct(32, 3)
             )
       

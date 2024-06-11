@@ -10,4 +10,4 @@ To enable the model to use sRGB LDR images as input, the provided code transform
 
 
 # Issue
-The provided code still has a training problem. The mask estimation cannot correctly reduce the loss and results in color distortion.
+The provided code still has a training problem. The mask estimation cannot correctly reduce the loss and results in color distortion & noise artifact.

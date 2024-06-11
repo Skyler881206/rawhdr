@@ -12,15 +12,12 @@ import torch
 import time
 import matplotlib.pyplot as plt
 import random
-# from module.utils.vgg16 import VGG16FeatureExtractor
 import utils
 
 if __name__ == "__main__":
     
     print("Load Config")
-    # data_root = config.hdr_root
-    data_root = "/work/u8083200/Thesis/datasets/SingleHDR_training_data"
-    # data_root = "/work/u8083200/Thesis/datasets/SingleHDR_training_data"
+    data_root = config.HDR_ROOT
     batch_size = config.BATCH_SIZE
     epochs = config.EPOCH
     aug = config.AUG
@@ -32,22 +29,10 @@ if __name__ == "__main__":
     learning_rate = config.LEARNING_RATE
     device = config.DEVICE
     
-    ev_normalize = config.EV_NORMALIZE
-    ev_norm_ldr = config.EV_NORM_LDR
-    ldr_domain = config.LDR_DOMAIN
-    ev = config.EV
-    ev_log = config.EV_focus
-    p_conv = config.P_CONV
-    tanh = config.TANH
     result_root = os.path.join(result_save_path, weight_name)
     
     print("\nWEIGHT_NAME: {}".format(weight_name))
     print("AUG: {}".format(aug))
-    print("TANH: {}".format(tanh))
-    print("EV_NORMALIZE: {}".format(ev_normalize))
-    print("EV_NORM_LDR: {}".format(ev_norm_ldr))
-    print("LDR_DOMAIN: {}".format(ldr_domain))
-    print("EV: {}\n".format(ev))
     
     # ----- Load Data -----
     print("Load Data...")
@@ -90,8 +75,6 @@ if __name__ == "__main__":
     val_dataloader = DataLoader(dataset.dataset(Val_HDR, stage=4, image_size=512, aug=aug), shuffle=True, batch_size=batch_size)
     
     print("Set Model")
-    # model = module.HDRUNet(p_conv=False).to(device)
-    # model = module.HDR_Stream_v6()
     model = module.rawhdr_model()
     model.apply(module.weights_init)
     model.to(device)
@@ -122,10 +105,7 @@ if __name__ == "__main__":
     
     # optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
     optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
-    # scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer=optimizer, max_lr=1e-2, steps_per_epoch=len(train_dataloader),
-    #                                                 div_factor=20, final_div_factor=1e3, epochs=epochs, pct_start=0.1)
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=1e-1)
-    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.9, patience=5)
     
     writer = SummaryWriter("runs/rawhdr/" + weight_name + "_log_" + time.ctime(time.time()), 
                            comment=weight_name)
@@ -133,7 +113,6 @@ if __name__ == "__main__":
     loss_dir = {}
     
     loss_weight = config.loss_weight
-    loss_config = config.loss_config
     fig, ax = plt.subplots()
     bars = ax.bar(*zip(*loss_weight.items()))
     ax.bar_label(bars)
@@ -164,23 +143,14 @@ if __name__ == "__main__":
             target = imgs["target"].to(device)
             target_mask = {"over": imgs["over"].to(device).to(torch.float32),
                            "under": imgs["under"].to(device).to(torch.float32)}
-            
-            # source_edge = imgs["source_edge"].to(device)
-            # target_edge = imgs["target_edge"].to(device)
-            
+
             source = source.to(torch.float32)
             target = target.to(torch.float32)
-            # source_edge = source_edge.to(torch.float32)
-            # target_edge = target_edge.to(torch.float32)
             
             optimizer.zero_grad()
             
             # Model Run
-            # pd_output, pd_structure, pd_texture = model((source, source_edge))
             pd_output, pd_mask = model(source)
-            
-            # pd_vgg_out = extroctor(pd_output)
-            # gt_vgg_out = extroctor(target)
             
             predict_dict = {"output": pd_output,
                             "mask": pd_mask}
@@ -210,26 +180,17 @@ if __name__ == "__main__":
                 
                 writer.add_image("Train_Out_texture/Target", dataset.eval_image(target, file_name=result_root + "/train/" + str(train_iteration) + "_gt.hdr"), train_iteration)
                 writer.add_image("Train_Out_texture/Predict_output", dataset.eval_image(pd_output, file_name=result_root + "/train/" + str(train_iteration) + "_pd.hdr"), train_iteration)
-                # writer.add_image("Train_Out_texture/Predict_texture", dataset.eval_image(pd_texture), train_iteration)
                 
                 writer.add_image("Train_Out_texture_log/Target_log", dataset.eval_image(target, log=True, max_value=max_value), train_iteration)
                 writer.add_image("Train_Out_texture_log/Predict_output_log", dataset.eval_image(pd_output, log=True, max_value=max_value), train_iteration)
-                # writer.add_image("Train_Out_texture_log/Predict_texture_log", dataset.eval_image(pd_texture, log=True, max_value=max_value), train_iteration)
                 
                 writer.add_image("Train_Out_structure/Target_over", dataset.eval_image(target_mask["over"]), train_iteration)
                 writer.add_image("Train_Out_structure/Predict_over", dataset.eval_image(pd_mask["over"]), train_iteration)
                 
                 writer.add_image("Train_Out_structure/Target_under", dataset.eval_image(target_mask["under"]), train_iteration)
                 writer.add_image("Train_Out_structure/Predict_under", dataset.eval_image(pd_mask["under"]), train_iteration)
-                
-                # writer.add_image("Train_Out_structure/Target", dataset.eval_image(target_edge), train_iteration)
-                # writer.add_image("Train_Out_structure/Predict", dataset.eval_image(pd_structure), train_iteration)
-                # writer.add_image("Train_Out_structure/Source", dataset.eval_image(source_edge), train_iteration)
                 writer.flush()
             train_iteration += 1
-            
-            # del source, target, source_edge, target_edge, pd_output, pd_structure, pd_texture, pd_vgg_out, gt_vgg_out, loss, loss_dict
-            # del source, target, source_edge, target_edge, pd_output, pd_structure, pd_texture, loss, loss_dict
             
             loss_saving = {key: value / epoch_sample for key, value in loss_dir.items()}
             tqdm_bar.set_postfix(loss_saving)
@@ -237,23 +198,8 @@ if __name__ == "__main__":
         scheduler.step()
         for key, value in loss_dir.items():
             writer.add_scalar("Train/" + key, loss_dir[key] / epoch_sample, epoch)
-            
-        # writer.add_scalar("Train/loss", loss_dir["loss"].item() / epoch_sample, epoch)
-        # writer.add_scalar("Train/hdr_loss", loss_dir["hdr_loss"].item() / epoch_sample, epoch)
-        # writer.add_scalar("Train/perceptual_loss", loss_dir["p_loss"].item() / epoch_sample, epoch)
-        # # writer.add_scalar("Train/ev_loss", loss_dir["ev_loss"].item() / epoch_sample, epoch)
-        # # writer.add_scalar("Train/gdm_loss", loss_dir["gdm_loss"].item() / epoch_sample, epoch)
-        # writer.add_scalar("Train/Learning Rate", scheduler.get_last_lr()[0], epoch)
-        # # writer.add_scalar("Train/Learning Rate", optimizer.param_groups[0]['lr'], epoch)
-        
 
         # Val
-        # if (epoch + 1) >= 20 and (epoch + 1) <= 40:
-        #     freq = 5
-        # elif epoch + 1 >= 41:
-        #     freq = 3
-        # else:
-        #     freq = 10
         freq = 1
         if (epoch + 1) % freq == 0:
             tqdm_bar = tqdm(val_dataloader, desc=f'Validation Epoch {epoch+1} / {epochs}',
@@ -272,22 +218,13 @@ if __name__ == "__main__":
                     target_mask = {"over": imgs["over"].to(device).to(torch.float32),
                                 "under": imgs["under"].to(device).to(torch.float32)}
                     
-                    # source_edge = imgs["source_edge"].to(device)
-                    # target_edge = imgs["target_edge"].to(device)
-                    
                     source = source.to(torch.float32)
                     target = target.to(torch.float32)
-                    # source_edge = source_edge.to(torch.float32)
-                    # target_edge = target_edge.to(torch.float32)
                     
                     optimizer.zero_grad()
                     
                     # Model Run
-                    # pd_output, pd_structure, pd_texture = model((source, source_edge))
                     pd_output, pd_mask = model(source)
-                    
-                    # pd_vgg_out = extroctor(pd_output)
-                    # gt_vgg_out = extroctor(target)
                     
                     predict_dict = {"output": pd_output,
                                     "mask": pd_mask}
@@ -315,7 +252,6 @@ if __name__ == "__main__":
                         
                         writer.add_image("Validation_Out_texture/Target", dataset.eval_image(target, file_name=result_root + "/val/" + str(val_iteration) + "_gt.hdr"), val_iteration)
                         writer.add_image("Validation_Out_texture/Predict_output", dataset.eval_image(pd_output, file_name=result_root + "/val/" + str(val_iteration) + "_pd.hdr"), val_iteration)
-                        # writer.add_imageValidationin_Out_texture/Predict_texture", dataset.eval_image(pd_texture), train_iteration)
                         
                         writer.add_image("Validation_Out_texture_log/Target_log", dataset.eval_image(target, log=True, max_value=max_value), val_iteration)
                         writer.add_image("Validation_Out_texture_log/Predict_output_log", dataset.eval_image(pd_output, log=True, max_value=max_value), val_iteration)
@@ -326,28 +262,14 @@ if __name__ == "__main__":
                         writer.add_image("Validation_Out_structure/Target_under", dataset.eval_image(target_mask["under"]), val_iteration)
                         writer.add_image("Validation_Out_structure/Predict_under", dataset.eval_image(pd_mask["under"]), val_iteration)
                         
-                        # writer.add_image("Validation_Out_structure/Target", dataset.eval_image(target_edge), val_iteration)
-                        # writer.add_image("Validation_Out_structure/Predict", dataset.eval_image(pd_structure), val_iteration)
-                        # writer.add_image("Validation_Out_structure/Source", dataset.eval_image(source_edge), val_iteration)
                         writer.flush()
                     val_iteration += 1
-        
-                    # del source, target, source_edge, target_edge, pd_output, pd_structure, pd_texture, pd_vgg_out, gt_vgg_out, loss, loss_dict
-                    # del source, target, source_edge, target_edge, pd_output, pd_structure, pd_texture, loss, loss_dict
         
                     loss_saving = {key: value / epoch_sample for key, value in loss_dir.items()}
                     tqdm_bar.set_postfix(loss_saving)
                     
             for key, value in loss_dir.items():
                 writer.add_scalar("Val/" + key, loss_dir[key] / epoch_sample, epoch)
-            # writer.add_scalar("Validation/loss", loss_dir["loss"].item() / epoch_sample, epoch)
-            # writer.add_scalar("Validation/hdr_loss", loss_dir["hdr_loss"].item() / epoch_sample, epoch)
-            # writer.add_scalar("Validation/perceptual_loss", loss_dir["p_loss"].item() / epoch_sample, epoch)
-            # # writer.add_scalar("Validation/ev_loss", loss_dir["ev_loss"].item() / epoch_sample, epoch)
-            # # writer.add_scalar("Validation/gdm_loss", loss_dir["gdm_loss"].item() / epoch_sample, epoch)
-            # # writer.add_scalar("Validation/Learning Rate", scheduler.get_last_lr()[0], epoch)
-                
-            # scheduler.step(loss_dir["loss"] / epoch_sample)
             
         if((epoch + 1) % 10 == 0):
             torch.save(model.state_dict(), os.path.join(os.path.join(weight_save_path, weight_name), str(epoch+1)+'.pth'))

@@ -15,13 +15,11 @@ class rawhdr_model(nn.Module):
         
         self.mask_estimation_over = nn.Sequential(
             mask_estimation(4, 1),
-            # mask_estimation(32, 1),
             nn.Sigmoid()
             )
         
         self.mask_estimation_under = nn.Sequential(
             mask_estimation(4, 1),
-            # mask_estimation(32, 1),
             nn.Sigmoid()
             )
         

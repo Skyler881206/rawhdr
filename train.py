@@ -27,8 +27,8 @@ if __name__ == "__main__":
     
     # weight_name = config.SPATIAL_WEIGHT_NAME
     weight_name = config.WEIGHT_NAME
-    result_save_path = os.path.join(config.RESULT_SAVE_PATH, "rawhdr_1")
-    weight_save_path = os.path.join(config.WEIGHT_SAVE_PATH, "rawhdr_1") 
+    result_save_path = config.RESULT_SAVE_PATH
+    weight_save_path = config.WEIGHT_SAVE_PATH
     learning_rate = config.LEARNING_RATE
     device = config.DEVICE
     
@@ -95,15 +95,6 @@ if __name__ == "__main__":
     model = module.rawhdr_model()
     model.apply(module.weights_init)
     model.to(device)
-    
-    for param in model.parameters():
-        param.requires_grad = False
-
-    # for param in model.feature_fusion_v2.parameters():
-    #     param.requires_grad = True
-    # model.load_state_dict(torch.load("/work/u8083200/Thesis/Test_arch/inpaint_mask/inpaint/weight/Inpaint/Inpaint_2Stream_v5/40.pth"))
-    # extroctor = VGG16FeatureExtractor().to(device)
-    # model = torch.nn.DataParallel(model)
     
     config.set_random_seed(2454)
     

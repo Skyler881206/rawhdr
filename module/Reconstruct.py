@@ -8,7 +8,7 @@ class Reconstruct(nn.Module):
         self.conv2 = nn.Conv2d(32, out_channels, 3, padding=1)
         self.branch = nn.Conv2d(in_channels, out_channels, 1)
         
-        self.act = nn.ReLU()
+        self.act = nn.LeakyReLU()
         
     def forward(self, x):
         features = self.act(self.conv1(x))

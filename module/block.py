@@ -48,16 +48,14 @@ class mask_estimation(nn.Module):
         
         self.conv = nn.Sequential(
             nn.Conv2d(in_channels, 32, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(inplace=True),
+            nn.LeakyReLU(inplace=True),
             nn.Conv2d(32, out_channels, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(inplace=True)
+            nn.LeakyReLU(inplace=True)
         )
         
-        self.act = nn.Sigmoid()
         
     def forward(self, x):
         x = self.barnch(x) + self.conv(x)
-        x = self.act(x)
         return x
 
 class global_spatial_guidance(nn.Module):
